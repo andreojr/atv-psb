@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gabarito PSB — Prova Assembly ATmega328P</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0e1117;
+    --panel: #111620;
+    --border: #1e2d40;
+    --green: #00ff9d;
+    --green-dim: #00c47a;
+    --green-faint: #00ff9d18;
+    --amber: #ffb300;
+    --amber-dim: #cc8f00;
+    --blue: #4fc3f7;
+    --red: #ff4444;
+    --muted: #4a5568;
+    --text: #c8d8e8;
+    --text-dim: #6b7f93;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+    pointer-events:none; z-index:9999;
+  }
+  body::after {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none; z-index:0;
+  }
+  .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; padding:48px 24px 80px; }
+
+  header { text-align:center; margin-bottom:48px; animation:fadeDown 0.6s ease both; }
+  .header-tag { font-size:11px; letter-spacing:4px; color:var(--green-dim); text-transform:uppercase; margin-bottom:12px; }
+  header h1 { font-family:'Orbitron',monospace; font-size:clamp(20px,4vw,36px); font-weight:900; color:var(--green); text-shadow:0 0 30px rgba(0,255,157,0.4); letter-spacing:2px; line-height:1.2; }
+  header h2 { font-family:'Orbitron',monospace; font-size:clamp(11px,2vw,15px); font-weight:700; color:var(--amber); letter-spacing:3px; margin-top:8px; opacity:0.85; }
+  .header-line { width:100%; height:1px; background:linear-gradient(90deg,transparent,var(--green),transparent); margin-top:24px; opacity:0.5; }
+
+  .tabs { display:flex; gap:4px; margin-bottom:0; animation:fadeDown 0.6s 0.1s ease both; flex-wrap:wrap; }
+  .tab { padding:10px 20px; background:var(--bg2); border:1px solid var(--border); border-bottom:none; color:var(--muted); cursor:pointer; font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:1px; transition:all 0.2s; user-select:none; }
+  .tab:hover { color:var(--text); border-color:var(--green-dim); }
+  .tab.active { background:var(--panel); color:var(--green); border-color:var(--green); border-bottom:1px solid var(--panel); z-index:2; }
+  .tab .num { color:var(--amber); margin-right:6px; font-weight:bold; }
+
+  .panel-wrap { border:1px solid var(--green); background:var(--panel); border-radius:0 4px 4px 4px; animation:fadeUp 0.5s 0.2s ease both; box-shadow:0 0 40px rgba(0,255,157,0.05); }
+  .panel { display:none; padding:28px 28px 36px; }
+  .panel.active { display:block; }
+
+  .q-title { font-family:'Orbitron',monospace; font-size:13px; font-weight:700; color:var(--amber); letter-spacing:3px; text-transform:uppercase; margin-bottom:6px; }
+  .q-desc { color:var(--text-dim); font-size:13px; line-height:1.7; margin-bottom:20px; padding-left:12px; border-left:2px solid var(--amber-dim); }
+
+  .char-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:20px; }
+  .char-table th { background:var(--bg); color:var(--green-dim); padding:6px 12px; text-align:left; letter-spacing:2px; font-size:11px; border-bottom:1px solid var(--border); }
+  .char-table td { padding:5px 12px; border-bottom:1px solid var(--border); color:var(--text); }
+  .char-table tr:hover td { background:var(--green-faint); }
+  .char-table .idx { color:var(--amber); font-weight:bold; }
+  .char-table .char { color:var(--blue); }
+  .char-table .seg { color:var(--green); }
+
+  .code-label { font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; padding-left:4px; }
+  .code-wrap { position:relative; margin-bottom:20px; }
+  pre {
+    background:var(--bg); border:1px solid var(--border); border-left:3px solid var(--green);
+    padding:18px 18px 18px 18px; overflow-x:auto;
+    font-family:'Share Tech Mono',monospace; font-size:12.5px; line-height:1.75;
+    border-radius:0 4px 4px 0; tab-size:4;
+  }
+  pre.amber { border-left-color:var(--amber); }
+  pre.blue  { border-left-color:var(--blue); }
+
+  .cm  { color:var(--muted); font-style:italic; }
+  .kw  { color:var(--green); }
+  .lb  { color:var(--amber); }
+  .nm  { color:var(--blue); }
+  .dr  { color:#e879f9; }
+  .sk  { color:var(--red); font-style:italic; }
+
+  .note { background:var(--green-faint); border:1px solid rgba(0,255,157,0.2); border-radius:4px; padding:12px 16px; font-size:12px; color:var(--text-dim); line-height:1.7; margin-bottom:18px; }
+  .note strong { color:var(--green); }
+  .note.amber-note { background:rgba(255,179,0,0.06); border-color:rgba(255,179,0,0.2); }
+  .note.amber-note strong { color:var(--amber); }
+
+  .copy-btn { position:absolute; top:8px; right:8px; background:var(--border); color:var(--muted); border:1px solid var(--border); padding:3px 10px; font-family:'Share Tech Mono',monospace; font-size:10px; cursor:pointer; letter-spacing:1px; transition:all 0.2s; border-radius:2px; }
+  .copy-btn:hover { color:var(--green); border-color:var(--green); }
+  .copy-btn.copied { color:var(--green); border-color:var(--green); }
+
+  footer { text-align:center; margin-top:48px; color:var(--muted); font-size:11px; letter-spacing:2px; }
+
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(12px)}  to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="header-tag">UFBA · Eng. da Computação · PSB</div>
+  <h1>GABARITO — PROVA ASSEMBLY</h1>
+  <h2>ATmega328P · 2026</h2>
+  <div class="header-line"></div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="show(0)"><span class="num">Q1</span> Copa do Brasil</div>
+  <div class="tab" onclick="show(1)"><span class="num">Q2</span> Contador 0–59</div>
+  <div class="tab" onclick="show(2)"><span class="num">Q3</span> Matriz (Proj5)</div>
+</div>
+
+<div class="panel-wrap">
+
+<!-- ══════════════════════════════ Q1 ══════════════════════════════ -->
+<div class="panel active" id="p0">
+  <div class="q-title">Q1 — "Copa do Brasil 2026" — Switch-Case com Tabela .DW</div>
+  <div class="q-desc">
+    Exibir cada caractere de "Copa do brasil 2026" num display de 7-seg.<br>
+    A tabela <code>.dw</code> guarda os padrões 7-seg dos 14 chars únicos (índices 0x0–0xD).<br>
+    O mecanismo de desvio é <strong>CPI/BREQ encadeados</strong> — o professor exigiu essa estrutura de switch-case.
+  </div>
+
+  <div class="note amber-note">
+    <strong>Sequência de índices para "Copa do brasil 2026" (19 chars):</strong><br>
+    C=0 · o=1 · p=2 · a=3 · ' '=4 · d=5 · o=<strong>1</strong> · ' '=4 · b=6 · r=7 · a=<strong>3</strong> · s=8 · i=9 · l=A · ' '=4 · 2=B · 0=C · 2=<strong>B</strong> · 6=D
+  </div>
+
+  <table class="char-table">
+    <tr><th>ÍNDICE</th><th>CHAR</th><th>PADRÃO 7-SEG</th><th>SEGMENTOS</th></tr>
+    <tr><td class="idx">0x0</td><td class="char">'C'</td><td class="seg">0x39</td><td>A,F,E,D</td></tr>
+    <tr><td class="idx">0x1</td><td class="char">'o'</td><td class="seg">0x1D</td><td>G,E,D,C</td></tr>
+    <tr><td class="idx">0x2</td><td class="char">'p'</td><td class="seg">0x73</td><td>G,F,E,B,A</td></tr>
+    <tr><td class="idx">0x3</td><td class="char">'a'</td><td class="seg">0x77</td><td>G,F,E,D,B,A</td></tr>
+    <tr><td class="idx">0x4</td><td class="char">' '</td><td class="seg">0x00</td><td>— (apagado)</td></tr>
+    <tr><td class="idx">0x5</td><td class="char">'d'</td><td class="seg">0x5E</td><td>G,E,D,C,B</td></tr>
+    <tr><td class="idx">0x6</td><td class="char">'b'</td><td class="seg">0x7C</td><td>G,F,E,D,C</td></tr>
+    <tr><td class="idx">0x7</td><td class="char">'r'</td><td class="seg">0x50</td><td>G,E</td></tr>
+    <tr><td class="idx">0x8</td><td class="char">'s'</td><td class="seg">0x6D</td><td>G,F,D,C,A</td></tr>
+    <tr><td class="idx">0x9</td><td class="char">'i'</td><td class="seg">0x10</td><td>E</td></tr>
+    <tr><td class="idx">0xA</td><td class="char">'l'</td><td class="seg">0x30</td><td>F,E</td></tr>
+    <tr><td class="idx">0xB</td><td class="char">'2'</td><td class="seg">0x5B</td><td>G,E,D,B,A</td></tr>
+    <tr><td class="idx">0xC</td><td class="char">'0'</td><td class="seg">0x3F</td><td>F,E,D,C,B,A</td></tr>
+    <tr><td class="idx">0xD</td><td class="char">'6'</td><td class="seg">0x7D</td><td>G,F,E,D,C,A</td></tr>
+  </table>
+
+  <div class="code-label">// TABELA .DW — 7 linhas, 2 padrões por word</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre><span class="cm">; byte LOW  = índice par  | byte HIGH = índice ímpar</span>
+<span class="lb">Tabela:</span>
+    <span class="dr">.dw</span> <span class="nm">0x1D39</span>  <span class="cm">; [1]o=0x1D  [0]C=0x39</span>
+    <span class="dr">.dw</span> <span class="nm">0x7773</span>  <span class="cm">; [3]a=0x77  [2]p=0x73</span>
+    <span class="dr">.dw</span> <span class="nm">0x5E00</span>  <span class="cm">; [5]d=0x5E  [4]' '=0x00</span>
+    <span class="dr">.dw</span> <span class="nm">0x507C</span>  <span class="cm">; [7]r=0x50  [6]b=0x7C</span>
+    <span class="dr">.dw</span> <span class="nm">0x106D</span>  <span class="cm">; [9]i=0x10  [8]s=0x6D</span>
+    <span class="dr">.dw</span> <span class="nm">0x5B30</span>  <span class="cm">; [B]2=0x5B  [A]l=0x30</span>
+    <span class="dr">.dw</span> <span class="nm">0x7D3F</span>  <span class="cm">; [D]6=0x7D  [C]0=0x3F</span></pre>
+  </div>
+
+  <div class="code-label">// DECODIFICA — switch-case via CPI/BREQ + cases com RET</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre><span class="lb">Decodifica:</span>
+<span class="cm">; ── SWITCH: compara AUX com cada índice ──</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x00</span>  <span class="cm">; 'C'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_0</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x01</span>  <span class="cm">; 'o'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_1</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x02</span>  <span class="cm">; 'p'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_2</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x03</span>  <span class="cm">; 'a'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_3</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x04</span>  <span class="cm">; ' '</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_4</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x05</span>  <span class="cm">; 'd'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_5</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x06</span>  <span class="cm">; 'b'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_6</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x07</span>  <span class="cm">; 'r'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_7</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x08</span>  <span class="cm">; 's'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_8</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x09</span>  <span class="cm">; 'i'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_9</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x0A</span>  <span class="cm">; 'l'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_A</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x0B</span>  <span class="cm">; '2'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_B</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x0C</span>  <span class="cm">; '0'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_C</span>
+    <span class="kw">CPI</span> AUX, <span class="nm">0x0D</span>  <span class="cm">; '6'</span>
+    <span class="kw">BREQ</span> <span class="lb">CASE_D</span>
+
+    <span class="cm">; ── DEFAULT ──</span>
+    <span class="cm">; (supondo RCALL — RET evita cair no CASE_0)</span>
+    <span class="kw">RET</span>
+
+<span class="cm">; ── CASES — cada um posiciona Z com ADD ZL,AUX e lê da tabela ──</span>
+<span class="lb">CASE_0:</span>  <span class="cm">; 'C'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x00</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_0</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_0:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_1:</span>  <span class="cm">; 'o'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x01</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_1</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_1:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_2:</span>  <span class="cm">; 'p'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x02</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_2</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_2:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_3:</span>  <span class="cm">; 'a'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x03</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_3</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_3:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_4:</span>  <span class="cm">; ' '</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x04</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_4</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_4:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_5:</span>  <span class="cm">; 'd'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x05</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_5</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_5:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_6:</span>  <span class="cm">; 'b'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x06</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_6</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_6:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_7:</span>  <span class="cm">; 'r'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x07</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_7</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_7:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_8:</span>  <span class="cm">; 's'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x08</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_8</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_8:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_9:</span>  <span class="cm">; 'i'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x09</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_9</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_9:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_A:</span>  <span class="cm">; 'l'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x0A</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_A</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_A:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_B:</span>  <span class="cm">; '2'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x0B</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_B</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_B:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_C:</span>  <span class="cm">; '0'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x0C</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_C</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_C:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span>
+
+<span class="lb">CASE_D:</span>  <span class="cm">; '6'</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, AUX        <span class="cm">; AUX ainda vale 0x0D</span>
+    <span class="kw">BRCC</span> <span class="lb">le_tab_D</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">le_tab_D:</span>
+    <span class="kw">LPM</span>  R0, Z
+    <span class="kw">OUT</span>  DISPLAY, R0
+    <span class="kw">RET</span></pre>
+  </div>
+
+  <div class="note">
+    <strong>Papel da tabela .dw aqui:</strong> os valores hard-coded em cada <code>CASE_X</code> (<code>LDI R0, 0x39</code> etc.) são exatamente os padrões da tabela. Em vez de <code>LDI</code>, o professor poderia ter pedido para buscar via <code>LPM</code> — mas com o switch-case já isolando o case, o <code>LDI</code> direto é equivalente e mais legível.
+  </div>
+</div>
+
+<!-- ══════════════════════════════ Q2 ══════════════════════════════ -->
+<div class="panel" id="p1">
+  <div class="q-title">Q2 — Contador 0–59, 2 Displays, 3 Botões</div>
+  <div class="q-desc">
+    B2 (PD2) zera · B1 (PD1) incrementa +1 · B0 (PD0) decrementa −1<br>
+    D1 = PORTB (dezena) · D0 = PORTC (unidade) · Pull-up interno ativado
+  </div>
+
+  <div class="note">
+    <strong>Pull-up:</strong> pino repouso = 1, pressionado = 0 → <code>SBIS PIND, BTN</code> pula quando <em>não</em> pressionado.<br>
+    <strong>Underflow:</strong> <code>DEC</code> de 0 produz 0xFF → detectar com <code>CPI UNIDADE, 0xFF</code>.<br>
+    <strong>Limite 59:</strong> dezena vai de 0–5, unidade 0–9. Checa <code>DEZENA == 6</code> para resetar.
+  </div>
+
+  <div class="code-label">// DEFINIÇÕES + INICIALIZAÇÕES</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre class="amber"><span class="dr">.equ</span> DISP_DEZ  = PORTB
+<span class="dr">.equ</span> DISP_UNI  = PORTC
+<span class="dr">.equ</span> BTN_DEC   = PD0   <span class="cm">; B0 — decrementa</span>
+<span class="dr">.equ</span> BTN_INC   = PD1   <span class="cm">; B1 — incrementa</span>
+<span class="dr">.equ</span> BTN_ZERO  = PD2   <span class="cm">; B2 — zera</span>
+<span class="dr">.def</span> AUX     = R16
+<span class="dr">.def</span> DEZENA  = R17
+<span class="dr">.def</span> UNIDADE = R18
+
+<span class="lb">Inicializacoes:</span>
+    <span class="kw">LDI</span> AUX, <span class="nm">0xFF</span>
+    <span class="kw">OUT</span> DDRB, AUX          <span class="cm">; PORTB saída (display dezena)</span>
+    <span class="kw">OUT</span> DDRC, AUX          <span class="cm">; PORTC saída (display unidade)</span>
+    <span class="kw">LDI</span> AUX, <span class="nm">0x00</span>
+    <span class="kw">OUT</span> DDRD, AUX          <span class="cm">; PORTD entrada (botões)</span>
+    <span class="kw">LDI</span> AUX, <span class="nm">0b00000111</span>
+    <span class="kw">OUT</span> PORTD, AUX         <span class="cm">; pull-up em PD0, PD1, PD2</span>
+    <span class="kw">LDI</span> DEZENA,  <span class="nm">0</span>
+    <span class="kw">LDI</span> UNIDADE, <span class="nm">0</span></pre>
+  </div>
+
+  <div class="code-label">// LOOP PRINCIPAL + AÇÕES</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre class="amber"><span class="lb">Principal:</span>
+    <span class="kw">RCALL</span> Mostrar_Display
+
+    <span class="kw">SBIS</span> PIND, BTN_ZERO    <span class="cm">; pula se PD2=1 (solto)</span>
+    <span class="kw">RJMP</span> Zerar
+    <span class="kw">SBIS</span> PIND, BTN_INC
+    <span class="kw">RJMP</span> Incrementar
+    <span class="kw">SBIS</span> PIND, BTN_DEC
+    <span class="kw">RJMP</span> Decrementar
+    <span class="kw">RJMP</span> Principal
+
+<span class="lb">Zerar:</span>
+    <span class="kw">LDI</span> DEZENA,  <span class="nm">0</span>
+    <span class="kw">LDI</span> UNIDADE, <span class="nm">0</span>
+    <span class="kw">RCALL</span> Debounce
+    <span class="kw">RJMP</span> Principal
+
+<span class="lb">Incrementar:</span>
+    <span class="kw">INC</span>  UNIDADE
+    <span class="kw">CPI</span>  UNIDADE, <span class="nm">10</span>
+    <span class="kw">BRLO</span> Inc_Fim
+    <span class="kw">LDI</span>  UNIDADE, <span class="nm">0</span>
+    <span class="kw">INC</span>  DEZENA
+    <span class="kw">CPI</span>  DEZENA, <span class="nm">6</span>        <span class="cm">; dezena 6 = passou do 59</span>
+    <span class="kw">BRLO</span> Inc_Fim
+    <span class="kw">LDI</span>  DEZENA, <span class="nm">0</span>         <span class="cm">; wrap 59 → 00</span>
+<span class="lb">Inc_Fim:</span>
+    <span class="kw">RCALL</span> Debounce
+    <span class="kw">RJMP</span>  Principal
+
+<span class="lb">Decrementar:</span>
+    <span class="kw">MOV</span>  AUX, DEZENA
+    <span class="kw">OR</span>   AUX, UNIDADE
+    <span class="kw">BREQ</span> Dec_Wrap          <span class="cm">; se 00 → vai para 59</span>
+    <span class="kw">DEC</span>  UNIDADE
+    <span class="kw">CPI</span>  UNIDADE, <span class="nm">0xFF</span>    <span class="cm">; underflow? DEC(0) = 0xFF</span>
+    <span class="kw">BRNE</span> Dec_Fim
+    <span class="kw">LDI</span>  UNIDADE, <span class="nm">9</span>
+    <span class="kw">DEC</span>  DEZENA
+<span class="lb">Dec_Fim:</span>
+    <span class="kw">RCALL</span> Debounce
+    <span class="kw">RJMP</span>  Principal
+<span class="lb">Dec_Wrap:</span>
+    <span class="kw">LDI</span>  DEZENA,  <span class="nm">5</span>
+    <span class="kw">LDI</span>  UNIDADE, <span class="nm">9</span>
+    <span class="kw">RCALL</span> Debounce
+    <span class="kw">RJMP</span>  Principal</pre>
+  </div>
+
+  <div class="code-label">// SUB-ROTINAS + TABELA</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre class="amber"><span class="lb">Mostrar_Display:</span>
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, UNIDADE
+    <span class="kw">BRCC</span> uni_ok  <span class="cm">; sem carry → lê direto</span>
+    <span class="kw">INC</span>  ZH
+<span class="lb">uni_ok:</span>
+    <span class="kw">LPM</span> AUX, Z
+    <span class="kw">OUT</span> DISP_UNI, AUX
+
+    <span class="kw">LDI</span> ZH, <span class="kw">HIGH</span>(Tabela&lt;&lt;1)
+    <span class="kw">LDI</span> ZL, <span class="kw">LOW</span>(Tabela&lt;&lt;1)
+    <span class="kw">ADD</span> ZL, DEZENA
+    <span class="kw">BRCC</span> dez_ok
+    <span class="kw">INC</span>  ZH
+<span class="lb">dez_ok:</span>
+    <span class="kw">LPM</span> AUX, Z
+    <span class="kw">OUT</span> DISP_DEZ, AUX
+    <span class="kw">RET</span>
+
+<span class="lb">Debounce:</span>
+    <span class="kw">RCALL</span> Atraso
+<span class="lb">Deb_Loop:</span>
+    <span class="kw">IN</span>   AUX, PIND
+    <span class="kw">ANDI</span> AUX, <span class="nm">0b00000111</span>
+    <span class="kw">CPI</span>  AUX, <span class="nm">0b00000111</span>
+    <span class="kw">BRNE</span> Deb_Loop
+    <span class="kw">RCALL</span> Atraso
+    <span class="kw">RET</span>
+
+<span class="lb">Atraso:</span>
+    <span class="kw">LDI</span> R19, <span class="nm">16</span>
+<span class="lb">volta:</span>
+    <span class="kw">DEC</span>  R17
+    <span class="kw">BRNE</span> volta
+    <span class="kw">DEC</span>  R18
+    <span class="kw">BRNE</span> volta
+    <span class="kw">DEC</span>  R19
+    <span class="kw">BRNE</span> volta
+    <span class="kw">RET</span>
+
+<span class="cm">; Tabela 7-seg dígitos 0–9 (mesmo formato Proj5 — .dw com 2 por linha)</span>
+<span class="lb">Tabela:</span>
+    <span class="dr">.dw</span> <span class="nm">0x3040</span>  <span class="cm">; [1]=0x30? — atenção: usar os valores reais do prof</span>
+    <span class="dr">.dw</span> <span class="nm">0x7940</span>  <span class="cm">; 1 0</span>
+    <span class="dr">.dw</span> <span class="nm">0x3024</span>  <span class="cm">; 3 2</span>
+    <span class="dr">.dw</span> <span class="nm">0x1219</span>  <span class="cm">; 5 4</span>
+    <span class="dr">.dw</span> <span class="nm">0x7802</span>  <span class="cm">; 7 6</span>
+    <span class="dr">.dw</span> <span class="nm">0x0308</span>  <span class="cm">; 9 8 — só precisa até aqui (dígitos 0–9)</span></pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ Q3 ══════════════════════════════ -->
+<div class="panel" id="p2">
+  <div class="q-title">Q3 — Adaptação do Proj5 para Matriz 10×10</div>
+  <div class="q-desc">
+    O Proj5 original acessa um array linear com <code>ADD ZL, AUX</code>.<br>
+    A adaptação recebe <strong>LINHA</strong> e <strong>COLUNA</strong> e calcula o índice linear
+    <code>AUX = LINHA×10 + COLUNA</code> antes de passar para <code>Decodifica</code>.<br>
+    Apenas 4 pontos mudam — o resto é idêntico ao Proj5.
+  </div>
+
+  <div class="note amber-note">
+    <strong>Fórmula:</strong> &nbsp;<code>AUX = LINHA × 10 + COLUNA</code><br>
+    Como não há <code>MUL</code> por constante arbitrária: &nbsp;<code>LINHA×10 = LINHA×8 + LINHA×2</code> usando shifts (<code>LSL</code>).
+  </div>
+
+  <div class="code-label">// ALTERAÇÃO 1 — novos .def</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre class="blue"><span class="cm">; === ADICIONADO ===</span>
+<span class="dr">.def</span> LINHA  = R17   <span class="cm">; índice de linha  (0–9)</span>
+<span class="dr">.def</span> COLUNA = R18   <span class="cm">; índice de coluna (0–9)</span>
+<span class="cm">; AUX (R16) continua sendo o índice passado para Decodifica</span></pre>
+  </div>
+
+  <div class="code-label">// ALTERAÇÃO 2 — inicializar linha e coluna</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre class="blue"><span class="cm">; === ADICIONADO em Inicializacoes ===</span>
+    <span class="kw">LDI</span> LINHA,  <span class="nm">3</span>   <span class="cm">; linha desejada</span>
+    <span class="kw">LDI</span> COLUNA, <span class="nm">7</span>   <span class="cm">; coluna desejada</span></pre>
+  </div>
+
+  <div class="code-label">// ALTERAÇÃO 3 — Principal: calcula índice linear antes de Decodifica</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre class="blue"><span class="lb">Principal:</span>
+    <span class="cm">; === ADICIONADO — AUX = LINHA*10 + COLUNA ===</span>
+    <span class="cm">; LINHA*10 = LINHA*8 + LINHA*2</span>
+    <span class="kw">MOV</span>  AUX, LINHA        <span class="cm">; AUX = LINHA</span>
+    <span class="kw">LSL</span>  AUX               <span class="cm">; AUX = LINHA*2</span>
+
+    <span class="kw">MOV</span>  R19, LINHA
+    <span class="kw">LSL</span>  R19               <span class="cm">; R19 = LINHA*2</span>
+    <span class="kw">LSL</span>  R19               <span class="cm">; R19 = LINHA*4</span>
+    <span class="kw">LSL</span>  R19               <span class="cm">; R19 = LINHA*8</span>
+
+    <span class="kw">ADD</span>  AUX, R19          <span class="cm">; AUX = LINHA*2 + LINHA*8 = LINHA*10</span>
+    <span class="kw">ADD</span>  AUX, COLUNA       <span class="cm">; AUX = LINHA*10 + COLUNA</span>
+
+    <span class="cm">; === NÃO ALTERADO ===</span>
+    <span class="kw">RCALL</span> Decodifica
+    <span class="kw">RCALL</span> Atraso
+    <span class="kw">RJMP</span>  Principal</pre>
+  </div>
+
+  <div class="code-label">// SUB-ROTINAS — não alteradas</div>
+<pre class="blue"><span class="sk">; ► Sub-rotina Decodifica — não foi alterada</span>
+<span class="sk">; ► Sub-rotina Atraso     — não foi alterada</span></pre>
+
+  <div class="code-label" style="margin-top:18px">// ALTERAÇÃO 4 — Tabela expandida para 10×10</div>
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCode(this)">COPIAR</button>
+<pre class="blue"><span class="cm">; === SUBSTITUÍDO — 100 elementos, 50 .dw (row-major) ===</span>
+<span class="lb">Tabela:</span>
+    <span class="cm">; linha 0:  [1][0]   [3][2]   [5][4]   [7][6]   [9][8]</span>
+    <span class="dr">.dw</span> <span class="nm">0x0100</span>, <span class="nm">0x0302</span>, <span class="nm">0x0504</span>, <span class="nm">0x0706</span>, <span class="nm">0x0908</span>
+    <span class="cm">; linha 1</span>
+    <span class="dr">.dw</span> <span class="nm">0x1110</span>, <span class="nm">0x1312</span>, <span class="nm">0x1514</span>, <span class="nm">0x1716</span>, <span class="nm">0x1918</span>
+    <span class="cm">; linha 2</span>
+    <span class="dr">.dw</span> <span class="nm">0x2120</span>, <span class="nm">0x2322</span>, <span class="nm">0x2524</span>, <span class="nm">0x2726</span>, <span class="nm">0x2928</span>
+    <span class="cm">; linha 3</span>
+    <span class="dr">.dw</span> <span class="nm">0x3130</span>, <span class="nm">0x3332</span>, <span class="nm">0x3534</span>, <span class="nm">0x3736</span>, <span class="nm">0x3938</span>
+    <span class="cm">; linha 4</span>
+    <span class="dr">.dw</span> <span class="nm">0x4140</span>, <span class="nm">0x4342</span>, <span class="nm">0x4544</span>, <span class="nm">0x4746</span>, <span class="nm">0x4948</span>
+    <span class="cm">; linha 5</span>
+    <span class="dr">.dw</span> <span class="nm">0x5150</span>, <span class="nm">0x5352</span>, <span class="nm">0x5554</span>, <span class="nm">0x5756</span>, <span class="nm">0x5958</span>
+    <span class="cm">; linha 6</span>
+    <span class="dr">.dw</span> <span class="nm">0x6160</span>, <span class="nm">0x6362</span>, <span class="nm">0x6564</span>, <span class="nm">0x6766</span>, <span class="nm">0x6968</span>
+    <span class="cm">; linha 7</span>
+    <span class="dr">.dw</span> <span class="nm">0x7170</span>, <span class="nm">0x7372</span>, <span class="nm">0x7574</span>, <span class="nm">0x7776</span>, <span class="nm">0x7978</span>
+    <span class="cm">; linha 8</span>
+    <span class="dr">.dw</span> <span class="nm">0x8180</span>, <span class="nm">0x8382</span>, <span class="nm">0x8584</span>, <span class="nm">0x8786</span>, <span class="nm">0x8988</span>
+    <span class="cm">; linha 9</span>
+    <span class="dr">.dw</span> <span class="nm">0x9190</span>, <span class="nm">0x9392</span>, <span class="nm">0x9594</span>, <span class="nm">0x9796</span>, <span class="nm">0x9998</span></pre>
+  </div>
+
+  <div class="note">
+    <strong>Resumo das 4 alterações:</strong> (1) declarar <code>LINHA</code> e <code>COLUNA</code>, (2) inicializá-los, (3) calcular <code>AUX = LINHA×10 + COLUNA</code> no <code>Principal</code>, (4) expandir a <code>Tabela</code> para 10×10. <code>Decodifica</code> e <code>Atraso</code> são intocadas.
+  </div>
+</div>
+
+</div><!-- /panel-wrap -->
+<footer>PSB · UFBA · Assembly ATmega328P · gerado com Claude</footer>
+</div>
+
+<script>
+function show(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+}
+function copyCode(btn){
+  const pre=btn.nextElementSibling;
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='COPIADO!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='COPIAR';btn.classList.remove('copied');},1500);
+  });
+}
+</script>
+</body>
+</html>
